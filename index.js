@@ -2,8 +2,8 @@ const axios = require("axios");
 const fs = require("fs");
 require("dotenv").config();
 
-const API_KEY ="AIzaSyA-_N-oOfuZekqFvO0-2WuL55O71AALFH8";
-const TARGET_COUNT = 1000;
+const API_KEY = process.env.API_KEY;
+const TARGET_COUNT = process.env.TARGET_COUNT;
 
 // Service types to search (broad coverage)
 const SERVICE_KEYWORDS = [
