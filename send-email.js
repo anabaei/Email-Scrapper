@@ -6,11 +6,11 @@ const sgMail = require("@sendgrid/mail");
 const { render } = require("@react-email/render");
 const { OutreachEmail } = require("./email-template");
 
-// Twilio SendGrid API key (from Twilio SendGrid / Twilio Email)
-const apiKey = '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' // process.env.TWILIO_EMAIL_API_KEY;
+// Twilio SendGrid API key (from .env only — never commit keys)
+const apiKey = process.env.SENDGRID_API_KEY || process.env.TWILIO_EMAIL_API_KEY;
 if (apiKey) sgMail.setApiKey(apiKey);
 
-const FROM_EMAIL = process.env.FROM_EMAIL || "paggy@twinnlinks.com";
+const FROM_EMAIL = process.env.FROM_EMAIL || "noreply@example.com";
 
 function parseCsvLine(line) {
   const result = [];
