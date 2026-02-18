@@ -34,24 +34,48 @@ function parseCsv(filePath) {
   const content = fs.readFileSync(filePath, "utf8");
   const lines = content.trim().split("\n");
   if (lines.length < 2) return [];
+  const header = parseCsvLine(lines[0]).map((h) => (h || "").toLowerCase().trim());
   const rows = [];
   for (let i = 1; i < lines.length; i++) {
-    const [name = "", email = "", address = ""] = parseCsvLine(lines[i]);
+    const values = parseCsvLine(lines[i]);
+    const row = {};
+    header.forEach((h, j) => {
+      row[h] = values[j] ?? "";
+    });
+    const email = (row.email || "").trim();
     if (email && email.includes("@") && !email.includes("domain.com") && !email.includes("example.com") && !email.endsWith(".png")) {
-      rows.push({ name, email, address });
+      rows.push({
+        firstName: row.firstname ?? row.firstName ?? "",
+        lastName: row.lastname ?? row.lastName ?? "",
+        email,
+        address: row.address ?? "",
+        website: row.website ?? "",
+        phone: row.phone ?? "",
+        serviceType: row.servicetype ?? row.serviceType ?? "",
+        name: row.name ?? "",
+      });
     }
   }
   return rows;
 }
 
-async function sendToBusiness({ name, email, address }) {
+async function sendToBusiness(business) {
+  const { name, email, firstName, lastName, address, website, phone, serviceType } = business;
   const html = await render(
-    React.createElement(OutreachEmail, { businessName: name, businessAddress: address })
+    React.createElement(OutreachEmail, {
+      businessName: name,
+      businessAddress: address,
+      firstName,
+      lastName,
+      website,
+      phone,
+      serviceType,
+    })
   );
   const [response] = await sgMail.send({
     to: email,
     from: FROM_EMAIL,
-    subject: `Hello, ${name}`,
+    subject: `Hello, ${firstName || name}`,
     html,
   });
   return { id: response.headers["x-message-id"] || response.statusCode };
@@ -76,9 +100,14 @@ async function main() {
     }
     console.log("Sending test email to", to);
     const data = await sendToBusiness({
+      firstName: "Test",
+      lastName: "Business",
       name: "Test Business",
       email: to,
       address: "123 Test St, Toronto, ON",
+      website: "",
+      phone: "",
+      serviceType: "",
     });
     console.log("Sent successfully:", data.id);
     return;
@@ -101,7 +130,7 @@ async function main() {
     for (const b of businesses) {
       try {
         const data = await sendToBusiness(b);
-        console.log(`✓ ${b.name} (${b.email}) -> ${data.id}`);
+        console.log(`✓ ${b.name || b.email} (${b.email}) -> ${data.id}`);
       } catch (err) {
         console.error(`✗ ${b.name}:`, err.response?.body?.errors?.[0]?.message || err.message);
       }
